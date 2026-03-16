@@ -2,15 +2,18 @@
 
 Documentación y código para el hackaton de la UPM de 2026.
 
-## Guía de Uso de la API
+# Guía de Uso de la API
 
-A continuación se detallan los endpoints disponibles para los alumnos y ejemplos de cómo consultarlos.
+Se ha publicado una API para el consumo de los participantes del Hackaton que permite realizar dos acciones principales:
+- Obtener datos del clima.
+- Generar respuestas con un LLM.
 
-### 1. Autenticación
+Y de manera adicional existen unos endpoints para registrarse y generar un "bearer token" que enviar con las peticiones a las acciones anteriores.
 
-Para acceder a los endpoints de `/weather` y `prompt`, es necesario registrarse e iniciar sesión para obtener un **Bearer Token**.
+## Autenticación
 
-#### Registro
+Como se ha comentado antes, para acceder a los endpoints de `/weather` y `prompt`, es necesario registrarse e iniciar sesión para obtener un **Bearer Token**. Esto se puede hacer directamente a traves del navegador en [http://ec2-54-171-51-31.eu-west-1.compute.amazonaws.com](http://ec2-54-171-51-31.eu-west-1.compute.amazonaws.com), pero tambien mediante peticiones HTTP.
+
 Crea una cuenta para tu equipo.
 - **URL**: `POST /register`
 - **Body (Form Data)**: `nickName`, `teamName`, `password`
@@ -22,7 +25,6 @@ curl -X POST http://ec2-54-171-51-31.eu-west-1.compute.amazonaws.com/register \
      -d "password=mi_password"
 ```
 
-#### Login
 Obtén el token de acceso.
 - **URL**: `POST /login`
 - **Body (Form Data)**: `nickName`, `password`
@@ -34,12 +36,9 @@ curl -X POST http://ec2-54-171-51-31.eu-west-1.compute.amazonaws.com/login \
 ```
 *Nota: El servidor redirige al root con el token en la URL, pero el token se genera y valida mediante JWT.*
 
-### 2. Endpoints del Proyecto
+## Endpoints del Proyecto
 
-Todos estos endpoints requieren la cabecera `Authorization: Bearer <TOKEN>`.
-
-#### Obtener Clima
-Devuelve datos meteorológicos aleatorios.
+Obtener los datos del clima, que devuelve un JSON con datos meteorológicos de ejemplo.
 - **URL**: `GET /weather`
 - **Query Params**: `disaster=true|false` (opcional)
 
@@ -49,7 +48,8 @@ curl -X GET "http://ec2-54-171-51-31.eu-west-1.compute.amazonaws.com/weather?dis
 ```
 
 #### Enviar Prompt al LLM
-Envía instrucciones y una consulta al modelo de lenguaje (Bedrock Knowledge Base).
+
+Envía instrucciones y una consulta al modelo de lenguaje (por debajo usa el servicio de AWS de Bedrock Knowledge Base).
 - **URL**: `POST /prompt`
 - **Body (JSON)**: `system_prompt`, `user_prompt`
 
