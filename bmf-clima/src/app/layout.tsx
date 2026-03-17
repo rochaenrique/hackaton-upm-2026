@@ -30,8 +30,8 @@ export default function RootLayout({
           <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <SidebarProvider>
           <AppSidebar />
-          <SidebarTrigger />
-          <main>{children}</main>
+          <SidebarTrigger  />
+          <main className = "w-full h-full">{children}</main>
           </SidebarProvider>
           </body>
           </html>
