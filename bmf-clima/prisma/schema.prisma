@@ -12,6 +12,14 @@ datasource db {
   provider = "postgresql"
 }
 
+model Chat {
+  id            Int @id @default(autoincrement())
+  title         String
+  content       Json[]
+  author        User @relation(fields: [authorId], references: [id])
+  authorId      String
+}
+
 model User {
   id            String    @id
   name          String
@@ -22,6 +30,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  chats         Chat[]
 
   @@unique([email])
   @@map("user")

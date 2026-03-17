@@ -1,14 +1,13 @@
 "use client"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
   DialogFooter,
-} from "@/components/ui/dialog"
-
+} from "@/components/ui/dialog";
 import {
   Dialog,
   DialogContent,
@@ -16,19 +15,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-
+} from "@/components/ui/dialog";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/tabs";
+import { useSession } from "@/lib/auth-client";
 
 import LoginCard from "./LoginCard";
 
 
 function LogDialog() {
+  
+  const onLogIn = (email: string, password: string) => {
+  }
   
   return (
           <DialogContent className="sm:max-w-sm">
@@ -46,11 +48,11 @@ function LogDialog() {
           
           </TabsList>
           <TabsContent value="login">
-          <LoginCard />
+          <LoginCard onLogIn={onLogIn} />
           </TabsContent>
           
           <TabsContent value="signup">
-          <LoginCard />
+          <LoginCard onLogIn={onLogIn} />
           </TabsContent>
           
           <DialogFooter>
@@ -70,13 +72,19 @@ export default function Chat() {
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
-  
   const formRef = useRef(null);
+  const { data: session, isPending } = useSession();
+  
+  useEffect(() => {
+              if (!isPending || !session?.user) {
+                // NOTE(erb): should login here
+                //setOpen(true);
+              }
+            }, [isPending, session]);
   
   const loggedIn = false;
   
   async function requestDisaster(isDisaster: boolean) {
-    
     try { 
       setLoading(true);
       const params = new URLSearchParams();
@@ -127,32 +135,78 @@ export default function Chat() {
     }
   }
   
+  // TODO(erb): 
+  // isPending      -> loading
+  // !session?.user -> redirecting
+  
   return (
           <Dialog open={open} onOpenChange={setOpen}>
-          
           <LogDialog />
+          <div className="bg-primary text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
+          {/*<div> 
+                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                    {loading && <Spinner /> }
+                                                                                                                                                                                                    {content && content.length > 0 && <div>Content: {content}</div>}
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                    {error && error.length > 0 && <div className="text-red-500">{error}</div>}
+                                                                                                                                                                                                    </div>*/}
           
-          <div className="bg-primary text-secondary w-full h-full">
-          <div> 
-          <div>
-          {loading && <Spinner /> }
-          {content && content.length > 0 && <div>Content: {content}</div>}
+          <div className="grid grid-flow-rows grid-cols-5 gap-2"> 
+          {chatConversation
+              .map((chatMessage, i) => (
+                                        <div key={`${chatMessage.role}-${chatMessage.content}-${i}`} className={`col-span-4 bg-green-800 p-2 rounded-md ${chatMessage.role === "user" ? "col-start-2" : "col-start-1"}`}>
+                                        <div className="text-green-500">{chatMessage.role}</div>
+                                        <div>{chatMessage.content}</div>
+                                        </div>
+                                        ))}
           </div>
-          {error && error.length > 0 && <div className="text-red-500">{error}</div>}
-          </div>
           
-          
-          <div> CONTENT WILL BE HERRE</div>
-          <form onSubmit={handleSubmit} ref={formRef}>
-          <Input className="" onChange={(e) => setText(e.target.value)} value={text} />
+          <form onSubmit={handleSubmit} ref={formRef} className="flex flex-row bg-gray-800 rounded-md p-2">
+          <Input className="border-none text-secondary" onChange={(e) => setText(e.target.value)} value={text} />
+          <Button type="submit" variant="secondary">Send</Button>
           </form>
-          
-          
-          <DialogTrigger asChild>
-          <Button variant="outline">Sign Up</Button>
-          </DialogTrigger>
           </div>
           </Dialog>
           
           );
 }
+
+const chatConversation = [
+                          {
+                            role: "system",
+                            content: "You are a helpful assistant."
+                          },
+                          {
+                            role: "user",
+                            content: "Hey, can you help me plan a trip?"
+                          },
+                          {
+                            role: "ai",
+                            content: "Of course! Where are you thinking of going?"
+                          },
+                          {
+                            role: "user",
+                            content: "I'm considering Japan, maybe Tokyo and Kyoto."
+                          },
+                          {
+                            role: "ai",
+                            content: "Great choices! Tokyo is vibrant and modern, while Kyoto offers beautiful temples and tradition."
+                          },
+                          {
+                            role: "user",
+                            content: "What’s the best time to visit?"
+                          },
+                          {
+                            role: "ai",
+                            content: "Spring (March to May) for cherry blossoms or autumn (September to November) for colorful foliage are ideal."
+                          },
+                          {
+                            role: "user",
+                            content: "Nice! Any food recommendations?"
+                          },
+                          {
+                            role: "ai",
+                            content: "Definitely try sushi, ramen, tempura, and okonomiyaki. Each region has its own specialties."
+                          },
+                          
+                          ];

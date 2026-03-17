@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useState } from "react";
 
 const typeHome = ["Sótano", "Planta baja", "Piso alto", "Casa de Campo"] as const;
 const needs = ["Silla de ruedas", "Persona dependiente", "Mascota"] as const;
@@ -110,7 +111,23 @@ function SelectNeeds() {
           )
 }
 
-export default function LoginCard(){
+type LoginCardProps = {
+  onLogIn: (email: string, password: string) => void;
+};
+
+export default function LoginCard({ onLogIn }: LoginCardProps) {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  
+  // TODO(erb): handle loading
+  
+  const handleLogIn = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // TODO(erb): get email and password
+    onLogIn(email, password);
+  }
+  
   return (
           <Card>
           <CardHeader>
@@ -121,7 +138,7 @@ export default function LoginCard(){
           </CardAction>
           </CardHeader>
           <CardContent>
-          <form>
+          <form onSubmit={handleLogIn}>
           <div className="flex flex-col gap-6">
           <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
