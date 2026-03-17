@@ -25,6 +25,14 @@ import {
 import { useSession } from "@/lib/auth-client";
 
 import LoginCard from "./LoginCard";
+import { Field } from "@base-ui/react";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSet,
+} from "@/components/ui/field"
 
 
 function LogDialog() {
@@ -142,7 +150,7 @@ export default function Chat() {
   return (
           <Dialog open={open} onOpenChange={setOpen}>
           <LogDialog />
-          <div className="bg-primary text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
+          <div className="bg-neutral-900 text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
           {/*<div> 
                                                                                                                                                                                                     <div>
                                                                                                                                                                                                     {loading && <Spinner /> }
@@ -151,18 +159,28 @@ export default function Chat() {
                                                                                                                                                                                                     {error && error.length > 0 && <div className="text-red-500">{error}</div>}
                                                                                                                                                                                                     </div>*/}
           
-          <div className="grid grid-flow-rows grid-cols-5 gap-2"> 
+          <div>
+            <Field>
+
+            </File>
+          </div>
+          <div className="flex flex-col gap-4 p-4 "> 
           {chatConversation
               .map((chatMessage, i) => (
-                                        <div key={`${chatMessage.role}-${chatMessage.content}-${i}`} className={`col-span-4 bg-green-800 p-2 rounded-md ${chatMessage.role === "user" ? "col-start-2" : "col-start-1"}`}>
-                                        <div className="text-green-500">{chatMessage.role}</div>
-                                        <div>{chatMessage.content}</div>
+                                        <div key={`${chatMessage.role}-${chatMessage.content}-${i}`} className={`flex w-full ${chatMessage.role === "user" ? "justify-end" : "justify-start"}`}>
+
+                                          {/* La burbuja: "w-fit" hace que el fondo solo ocupe el texto */}
+                                      <div className={` max-w-[80%] w-fit p-3 rounded-lg ${chatMessage.role === "user" ? "bg-zinc-600 text-right" : "bg-zinc-700 text-left"}`}>
+                                        <div className="text-xs font-bold text-blue-500 uppercase mb-1">
+                                          {chatMessage.role}</div>
+                                        <div className="text-white">{chatMessage.content}</div>
+                                        </div>
                                         </div>
                                         ))}
           </div>
           
-          <form onSubmit={handleSubmit} ref={formRef} className="flex flex-row bg-gray-800 rounded-md p-2">
-          <Input className="border-none text-secondary" onChange={(e) => setText(e.target.value)} value={text} />
+          <form onSubmit={handleSubmit} ref={formRef} className="flex flex-row bg-none rounded-md p-2">
+          <Input className="rounded-lg bg-zinc-700 text-secondary" onChange={(e) => setText(e.target.value)} value={text} />
           <Button type="submit" variant="secondary">Send</Button>
           </form>
           </div>
