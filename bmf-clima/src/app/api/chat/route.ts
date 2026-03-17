@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 
-const SYSTEM_PROMPT = "Eres un asistente, te llamas aaron, eres imigrante venezuelano en africa subsariana. Reponde con un chiste de tu cultura. Responde todas las preguntas con la llamada a tu chaman al final. RESPONDE EN TEXTO CLARO (SIN MARKDOWN), PUEDES USAR EMOJIS";
+const SYSTEM_PROMPT = "Eres un asistente de un canal de meterologia para ayudar con las particularidades de un usuario. RESPONDE EN TEXTO CLARO (SIN MARKDOWN), PUEDES USAR EMOJIS";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   console.log("SERVER searchParams: ", searchParams);
   
@@ -14,7 +14,14 @@ export async function GET(request: NextRequest) {
     return new Response('Error', { status: 400 });
   }
   
+  const body = await request.json();
+  if (!body) {
+    return new Response('Error', { status: 400 });
+  }
+  
   try {
+    let systemPrompt = `${SYSTEM_PROMPT}. Estos son los datos del usuario en json: ${body}`;
+    
     const res = await fetch(`${process.env.API_URL}/prompt`, 
                             {
                               method: "POST",
@@ -23,7 +30,7 @@ export async function GET(request: NextRequest) {
                                 "Content-Type": "application/json",
                               },
                               body: JSON.stringify({
-                                                     system_prompt: SYSTEM_PROMPT,
+                                                     system_prompt: systemPrompt,
                                                      user_prompt: messageParam,
                                                    }),
                             });

@@ -23,8 +23,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import authClient from "@/lib/auth-client";
-
-import SignInCard from "./SignInCard";
+import SignInCard, { UserData } from "./SignInCard";
 import {
   Field,
   FieldDescription,
@@ -36,7 +35,7 @@ type LogDialogProps = {
   onLogIn: (email: string, password: string) => void;
 };
 
-function LogDialog() {
+function LogDialog({ onLogIn }: { onLogIn: (data: UserData) => void }) {
   
   return (
           <DialogContent className="sm:max-w-sm">
@@ -54,11 +53,11 @@ function LogDialog() {
           
           </TabsList>
           <TabsContent value="login">
-          <SignInCard  />
+          <SignInCard onLogIn={onLogIn}  />
           </TabsContent>
           
-          <TabsContent value="signup">
-          <SignInCard />
+          <TabsContent  value="signup">
+          <SignInCard onLogIn={onLogIn}/>
           </TabsContent>
           </Tabs>
           </DialogContent>
@@ -70,23 +69,26 @@ type Message = {
   content: string,
 };
 
+type Emergency = {
+  content: string,
+};
+
 export default function Chat() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [open, setOpen] = useState<boolean>(false);
   const [inputText, setInputText] = useState<string>("");
+  const [emergency, setEmergency] = useState<Emergency | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   
   const formRef = useRef(null);
-  const { data: session, isPending } = authClient.useSession();
   
   useEffect(() => {
-              if (!isPending || !session?.user) {
-                //setOpen(true);
+              if (!userData) {
+                setOpen(true);
               }
-            }, [isPending, session]);
-  
-  const loggedIn = false;
+            }, [userData, open]);
   
   async function requestDisaster(isDisaster: boolean) {
     try { 
@@ -94,10 +96,17 @@ export default function Chat() {
       const params = new URLSearchParams();
       params.append("disaster", isDisaster.toString());
       
-      const res = await fetch(`${process.env.HOST_URL}/api/weather?${params}`);
+      const res = await fetch(`${process.env.HOST_URL}/api/weather?${params}`, {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify(userData),
+                              });
       const json = await res.json();
-      // TODO(erb): set disaster
-      //setContent(JSON.stringify(json));
+      setEmergency({
+                     content: json.response,
+                   });
     } catch (e) {
       console.log("error", e);
       setError("Error while fetching");
@@ -106,7 +115,7 @@ export default function Chat() {
     }
   }
   
-  async function requestMessage(message: string) {
+  async function requestMessage(message: string, userData: UserData) {
     setMessages(prev => [...prev, {
                            role: "user",
                            content: message,
@@ -116,7 +125,15 @@ export default function Chat() {
       const params = new URLSearchParams();
       params.append("message", message);
       
-      const res = await fetch(`${process.env.HOST_URL}/api/chat?${params}`);
+      console.log("REQUEST MESSAGE", message, userData);
+      
+      const res = await fetch(`${process.env.HOST_URL}/api/chat?${params}`, {
+                                method: "POST", 
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify(userData),
+                              });
       const json = await res.json();
       
       const textResponse = json.response;
@@ -139,20 +156,20 @@ export default function Chat() {
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const formData = new FormData(e.currentTarget);
-    const message = formData.get("inputText") as string;
-    
-    setInputText("");
-    
-    await requestMessage(message);
-    
-    /*     
-        if (!loggedIn) {
-          setOpen(true);
-        } else {
-          
-        }
-     */
+    if (!userData) {
+      setOpen(true);
+      
+    } else {
+      const formData = new FormData(e.currentTarget);
+      const message = formData.get("inputText") as string;
+      setInputText("");
+      await requestMessage(message, userData);
+    }
+  }
+  
+  const onLogIn = (userData: UserData) => {
+    setUserData(userData);
+    setOpen(false);
   }
   
   // TODO(erb): 
@@ -161,19 +178,18 @@ export default function Chat() {
   
   return (
           <Dialog open={open} onOpenChange={setOpen}>
-          <LogDialog />
-          <div className="bg-primary text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
-          <div className="bg-neutral-900 text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
-          <div>
-            <Field className = "w-full sticky top-0 z-index bg-neutral-500 p-4 rounded-lg ">
-              <FieldLabel>Emergencias Climaticas</FieldLabel>
-              <FieldDescription className = "text-color-zinc-500 justify-self-center  p-2">
-                  Olas de calor
-                  Tormenta Electrica
-              </FieldDescription>
-            </Field>
-          </div>
+          <LogDialog onLogIn={onLogIn} />
+          <div className="bg-neutral-900 text-secondary w-full h-full flex flex-col justify-between p-3 gap-4">
+          
           <div className="flex flex-col gap-4 p-4 "> 
+          <div className="bg-red-800 text-secondary rounded-md p-2 h-min flex flex-row gap-2">
+          <div className="text-xl font-bold">Emergency</div>
+          {(emergency && emergency.content) ? 
+              <div className="">{emergency.content}</div>
+              : 
+            <Button onClick={() => requestDisaster(true)}>Most Recent</Button>}
+          </div>
+          
           {messages
               .map((chatMessage, i) => (
                                         <div key={`${chatMessage.role}-${chatMessage.content}-${i}`} className={`flex w-full ${chatMessage.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -192,8 +208,6 @@ export default function Chat() {
           <Input className="rounded-lg bg-zinc-700 text-secondary" name="inputText" onChange={(e) => setInputText(e.target.value)} value={inputText}/>
           <Button type="submit" variant="secondary">Send</Button>
           </form>
-          </div>
-          
           </div>
           </Dialog>
           );

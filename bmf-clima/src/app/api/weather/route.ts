@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
+const SYSTEM_PROMPT = "Eres un asistente de un canal de meterologia para ayudar con las particularidades de un usuario. RESPONDE EN TEXTO CLARO (SIN MARKDOWN), PUEDES USAR EMOJIS";
+
+export async function POST(request: NextRequest) {
   
   const searchParams = request.nextUrl.searchParams;
   console.log("SERVER searchParams: ", searchParams);
@@ -13,17 +15,41 @@ export async function GET(request: NextRequest) {
     return new Response('Error', { status: 400 });
   }
   
+  const body = await request.json();
+  if (!body) {
+    return new Response('Error', { status: 400 });
+  }
+  const userData = body;
+  
   try {
-    const res = await fetch(`${process.env.API_URL}/weather?disaster=${disasterParam}`, 
+    const emergencyRes = await fetch(`${process.env.API_URL}/weather?disaster=${disasterParam}`, 
+                                     {
+                                       headers: {
+                                         "Authorization": `Bearer ${process.env.API_TOKEN}`,
+                                         "Content-Type": "application/json",
+                                       },
+                                     });
+    
+    const emergencyData = await emergencyRes.json();
+    
+    const systemPrompt = `${SYSTEM_PROMPT}. Estos son los datos del usuario en json: ${body.userData}`;
+    const userPrompt = `Ayuda con estos datos de una emergencia de acuerdo con mis necesidades. ${emergencyData}`;
+    const res = await fetch(`${process.env.API_URL}/prompt`, 
                             {
+                              method: "POST",
                               headers: {
                                 "Authorization": `Bearer ${process.env.API_TOKEN}`,
                                 "Content-Type": "application/json",
                               },
+                              body: JSON.stringify({
+                                                     system_prompt: systemPrompt,
+                                                     user_prompt: userPrompt,
+                                                   }),
                             });
     
     const data = await res.json();
-    console.log("SEERVER DATA: ", data);
+    
+    
     return new Response(JSON.stringify(data), { status: res.status });
   } catch (e) {
     // NOTE(erb): error

@@ -22,6 +22,10 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxValue,
+  ComboboxChipsInput
 } from "@/components/ui/combobox"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -32,126 +36,48 @@ import { useRouter } from "next/navigation";
 import authClient from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 
-const typeHome = ["Sótano", "Planta baja", "Piso alto", "Casa de Campo"] as const;
-const needs = ["Silla de ruedas", "Persona dependiente", "Mascota"] as const;
 
-function SelectHome() {
-  return (
-          <Combobox items={typeHome}>
-          <ComboboxInput placeholder="Select a type home" />
-          <ComboboxContent>
-          <ComboboxEmpty>No hay resultados.</ComboboxEmpty>
-          <ComboboxList>
-          {(item) => (
-                      <ComboboxItem key={item} value={item}>
-                      {item}
-                      </ComboboxItem>
-                      )}
-          </ComboboxList>
-          </ComboboxContent>
-          </Combobox>
-          )
-}
-function SelectNeeds() {
-  return (
-          <FieldSet>
-          <FieldLegend>
-          Selecciona tus necesidades
-          </FieldLegend>
-          <FieldGroup className="gap-3">
-          <Field orientation="horizontal">
-          <Checkbox
-          id="finder-pref-9k2-hard-disks-ljj-checkbox"
-          name="finder-pref-9k2-hard-disks-ljj-checkbox"
-          defaultChecked
-          />
-          <FieldLabel
-          htmlFor="finder-pref-9k2-hard-disks-ljj-checkbox"
-          className="font-normal"
-          >
-          Sótano
-          </FieldLabel>
-          </Field>
-          <Field orientation="horizontal">
-          <Checkbox
-          id="finder-pref-9k2-external-disks-1yg-checkbox"
-          name="finder-pref-9k2-external-disks-1yg-checkbox"
-          defaultChecked
-          />
-          <FieldLabel
-          htmlFor="finder-pref-9k2-external-disks-1yg-checkbox"
-          className="font-normal"
-          >
-          Planta baja
-          </FieldLabel>
-          </Field>
-          <Field orientation="horizontal">
-          <Checkbox
-          id="finder-pref-9k2-cds-dvds-fzt-checkbox"
-          name="finder-pref-9k2-cds-dvds-fzt-checkbox"
-          />
-          <FieldLabel
-          htmlFor="finder-pref-9k2-cds-dvds-fzt-checkbox"
-          className="font-normal"
-          >
-          Piso Alto
-          </FieldLabel>
-          </Field>
-          <Field orientation="horizontal">
-          <Checkbox
-          id="finder-pref-9k2-connected-servers-6l2-checkbox"
-          name="finder-pref-9k2-connected-servers-6l2-checkbox"
-          />
-          <FieldLabel
-          htmlFor="finder-pref-9k2-connected-servers-6l2-checkbox"
-          className="font-normal"
-          >
-          Casa de Campo
-          </FieldLabel>
-          </Field>
-          </FieldGroup>
-          </FieldSet>
-          )
-}
+export type UserData = {
+  province: string;
+  houseKind: string;
+  specialNeeds: string[];
+};
 
-export default function SignInCard() {
+export default function SignInCard({ onLogIn }: { onLogIn: (data: UserData) => void }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   
-  const router = useRouter();
+  const [needs, setNeeds] = useState<string[]>([]);
+  
+  const homeItems = ["Sótano", "Planta baja", "Piso alto", "Casa de Campo"];
+  const [homeType, setHomeType] = useState<string>(homeItems[0]);
   
   const handleLogIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     setLoading(false);
     setError(null);
+    
     try { 
       const formData = new FormData(e.currentTarget);
+      const province = formData.get("province") as string;
       const email = formData.get("email") as string;
       const password = formData.get("password") as string;
       
-      console.log("email", email);
-      console.log("password", password);
-      
-      const res = await authClient.signUp.email({ 
-                                                  name: email,
-                                                  email, 
-                                                  password,
-                                                });
-      console.log("RES", res);
-      if (res.error) {
-        console.log("ERROR: ", res.error.message);
-        setError(res.error.message || "Something wen't wrong");
-      } else {
-        console.log("SIGNUP", res);
-        router.push("/");
-      } 
+      onLogIn({
+                province,
+                houseKind: homeType,
+                specialNeeds: needs,
+              })
+        
     } catch (e) {
       setError("Something wen't wrong");
     } finally {
       setLoading(false);
     }
   }
+  
+  const needOptions = ["Silla de ruedas", "Persona dependiente", "Mascota"];
   
   return (
           <Card>
@@ -167,6 +93,18 @@ export default function SignInCard() {
           </CardHeader>
           <CardContent>
           <div className="flex flex-col gap-6">
+          
+          <div className="grid gap-2">
+          <Label htmlFor="email">Provincia</Label>
+          <Input
+          name="province"
+          type="text"
+          placeholder="Valencia"
+          required
+          />
+          </div>
+          
+          
           <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -176,6 +114,7 @@ export default function SignInCard() {
           required
           />
           </div>
+          
           <div className="grid gap-2">
           <div className="flex items-center">
           <Label htmlFor="password">Contraseña</Label>
@@ -187,6 +126,53 @@ export default function SignInCard() {
           </a>
           </div>
           <Input name="password" type="password" required />
+          </div>
+          
+          <div className="grid gap-2">
+          <div className="flex items-center">
+          <Label htmlFor="password">Tipo de vivienda</Label>
+          </div>
+          <Combobox items={homeItems} >
+          <ComboboxInput placeholder="Select a type home" />
+          <ComboboxContent>
+          <ComboboxEmpty>No hay resultados.</ComboboxEmpty>
+          <ComboboxList>
+          {(item) => (
+                      <ComboboxItem key={item} value={item}>
+                      {item}
+                      </ComboboxItem>
+                      )}
+          </ComboboxList>
+          </ComboboxContent>
+          </Combobox>
+          </div>
+          
+          <div className="grid gap-2">
+          <div className="flex items-center">
+          <Label htmlFor="need">Necesidades</Label>
+          </div>
+          <Combobox 
+          items={needOptions} 
+          value={needs} 
+          onValueChange={setNeeds}
+          multiple
+          >
+          
+          <ComboboxChips>
+          <ComboboxValue>
+          {needs.map((item) => (
+                                <ComboboxChip key={item}>{item}</ComboboxChip>
+                                ))}
+          </ComboboxValue>
+          <ComboboxChipsInput placeholder="Necesidad" />
+          </ComboboxChips>
+          <ComboboxContent>
+          <ComboboxEmpty>Opcion no encontrada.</ComboboxEmpty>
+          <ComboboxList>
+          {(item) => (<ComboboxItem key={item} value={item}>{item}</ComboboxItem>)}
+          </ComboboxList>
+          </ComboboxContent>
+          </Combobox>
           </div>
           </div>
           
