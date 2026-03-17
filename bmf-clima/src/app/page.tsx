@@ -22,15 +22,16 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { useSession } from "@/lib/auth-client";
+import authClient from "@/lib/auth-client";
 
-import LoginCard from "./LoginCard";
+import SignInCard from "./SignInCard";
 
+
+type LogDialogProps = {
+  onLogIn: (email: string, password: string) => void;
+};
 
 function LogDialog() {
-  
-  const onLogIn = (email: string, password: string) => {
-  }
   
   return (
           <DialogContent className="sm:max-w-sm">
@@ -48,36 +49,33 @@ function LogDialog() {
           
           </TabsList>
           <TabsContent value="login">
-          <LoginCard onLogIn={onLogIn} />
+          <SignInCard  />
           </TabsContent>
           
           <TabsContent value="signup">
-          <LoginCard onLogIn={onLogIn} />
+          <SignInCard />
           </TabsContent>
-          
-          <DialogFooter>
-          <DialogClose asChild>
-          <Button variant="outline">Cancelar</Button>
-          </DialogClose>
-          <Button type="submit">Guardar </Button>
-          </DialogFooter>
           </Tabs>
           </DialogContent>
           );
 }
 
+type Message = {
+  role: "user" | "ai" | "system",
+  content: string,
+};
+
 export default function Chat() {
-  const [text, setText] = useState<string>("initialvalue");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [content, setContent] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  
   const [open, setOpen] = useState<boolean>(false);
   const formRef = useRef(null);
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   
   useEffect(() => {
               if (!isPending || !session?.user) {
-                // NOTE(erb): should login here
                 //setOpen(true);
               }
             }, [isPending, session]);
@@ -143,13 +141,6 @@ export default function Chat() {
           <Dialog open={open} onOpenChange={setOpen}>
           <LogDialog />
           <div className="bg-primary text-secondary w-full h-full grid grid-flow-rows p-3 gap-4">
-          {/*<div> 
-                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                    {loading && <Spinner /> }
-                                                                                                                                                                                                    {content && content.length > 0 && <div>Content: {content}</div>}
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    {error && error.length > 0 && <div className="text-red-500">{error}</div>}
-                                                                                                                                                                                                    </div>*/}
           
           <div className="grid grid-flow-rows grid-cols-5 gap-2"> 
           {chatConversation

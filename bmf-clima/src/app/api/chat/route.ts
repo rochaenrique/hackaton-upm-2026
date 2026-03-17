@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 const SYSTEM_PROMPT = "Eres un asistente, te llamas aaron, eres imigrante venezuelano en africa subsariana. Reponde con un chiste de tu cultura. Responde todas las preguntas con la llamada a tu chaman al final";
 
 export async function GET(request: NextRequest) {
-  
   const searchParams = request.nextUrl.searchParams;
   console.log("SERVER searchParams: ", searchParams);
   

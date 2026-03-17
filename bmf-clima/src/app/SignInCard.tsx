@@ -28,6 +28,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import authClient from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
 
 const typeHome = ["Sótano", "Planta baja", "Piso alto", "Casa de Campo"] as const;
 const needs = ["Silla de ruedas", "Persona dependiente", "Mascota"] as const;
@@ -111,39 +114,63 @@ function SelectNeeds() {
           )
 }
 
-type LoginCardProps = {
-  onLogIn: (email: string, password: string) => void;
-};
-
-export default function LoginCard({ onLogIn }: LoginCardProps) {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+export default function SignInCard() {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   
-  // TODO(erb): handle loading
+  const router = useRouter();
   
-  const handleLogIn = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleLogIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // TODO(erb): get email and password
-    onLogIn(email, password);
+    setLoading(false);
+    setError(null);
+    try { 
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+      
+      console.log("email", email);
+      console.log("password", password);
+      
+      const res = await authClient.signUp.email({ 
+                                                  name: email,
+                                                  email, 
+                                                  password,
+                                                });
+      console.log("RES", res);
+      if (res.error) {
+        console.log("ERROR: ", res.error.message);
+        setError(res.error.message || "Something wen't wrong");
+      } else {
+        console.log("SIGNUP", res);
+        router.push("/");
+      } 
+    } catch (e) {
+      setError("Something wen't wrong");
+    } finally {
+      setLoading(false);
+    }
   }
   
   return (
           <Card>
+          <form onSubmit={handleLogIn}>
           <CardHeader>
           <CardTitle>  Welcome to BMF-Clime </CardTitle>
+          {loading && <Spinner />}
+          
           <CardDescription>Login to your account</CardDescription>
           <CardAction>
           action here?
           </CardAction>
           </CardHeader>
           <CardContent>
-          <form onSubmit={handleLogIn}>
           <div className="flex flex-col gap-6">
           <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
-          id="email"
+          name="email"
           type="email"
           placeholder="m@example.com"
           required
@@ -159,16 +186,17 @@ export default function LoginCard({ onLogIn }: LoginCardProps) {
           ¿ Has olvidado tu contraseña?
           </a>
           </div>
-          <Input id="password" type="password" required />
+          <Input name="password" type="password" required />
           </div>
           </div>
-          </form>
+          
           </CardContent>
           <CardFooter className="flex-col gap-2">
           <Button type="submit" className="w-full">
           Login
           </Button>
           </CardFooter>
+          </form>
           </Card>
           );
 }
